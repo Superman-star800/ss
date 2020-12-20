@@ -1082,6 +1082,19 @@ View_user_connection_info(){
 		echo -e "${Error} Введите корректный номер(1-2)" && exit 1
 	fi
 }
+View_user_connection_info_1(){
+	format=$1
+	if [[ ${release} = "centos" ]]; then
+		cat /etc/redhat-release |grep 7\..*|grep -i centos>/dev/null
+		if [[ $? = 0 ]]; then
+			debian_View_user_connection_info "$format"
+		else
+			centos_View_user_connection_info "$format"
+		fi
+	else
+		debian_View_user_connection_info "$format"
+	fi
+}
 get_IP_address(){
 	#echo "user_IP_1=${user_IP_1}"
 	if [[ ! -z ${user_IP_1} ]]; then
