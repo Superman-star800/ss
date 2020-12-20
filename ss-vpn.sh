@@ -342,7 +342,7 @@ Install(){
 Start(){
 	check_installed_status
 	check_pid
-	[[ ! -z ${PID} ]] && echo -e "${Error} Shadowsocks работает, проверьте !" && exit 1
+	[[ ! -z ${PID} ]] && echo -e "${Error} Shadowsocks не работает, проверьте !" && exit 1
 	/etc/init.d/ss-go start
 	#sleep 1s
 	check_pid
