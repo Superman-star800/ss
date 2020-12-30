@@ -1118,7 +1118,7 @@ Modify_port(){
 	do
 		echo -e "Введите порт пользователя, аккаунт которого нужно изменить"
 		read -e -p "(По умолчанию: отмена):" ssr_port
-		[[ -z "${ssr_port}" ]] && echo -e "已取消..." && exit 1
+		[[ -z "${ssr_port}" ]] && echo -e "Отменено..." && exit 1
 		Modify_user=$(cat "${config_user_mudb_file}"|grep '"port": '"${ssr_port}"',')
 		if [[ ! -z ${Modify_user} ]]; then
 			break
