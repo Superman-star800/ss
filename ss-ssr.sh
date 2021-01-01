@@ -1800,16 +1800,6 @@ Download_DB(){
 Server_IP_Checker(){
 	 echo -e "IP данного сервера = $(curl "ifconfig.me") " && echo
 }
-AutoDate
-echo -e "Включить[y]/выключить[n] авто выставление даты?" && echo
-		read -e -p "(По умолчанию: Y):" autodate
-		[[ -z "${autodate}" ]] && auto_date_yn="y"
-		if [[ "${auto_date_yn}" == [Yy] ]]; then
-${activ}
-		else
-			${unactiv}
-		fi
-}
 check_sys
 [[ ${release} != "debian" ]] && [[ ${release} != "ubuntu" ]] && [[ ${release} != "centos" ]] && echo -e "${Error} 本脚本不支持当前系统 ${release} !" && exit 1
 action=$1
@@ -1894,13 +1884,9 @@ case "$num" in
 	Download_DB
         ;;
 	17)
-		Server_IP_Checker
-  ;;
-18)
-   AutoDate
-  ;;
+        Server_IP_Checker
 	*)
-	echo -e "${Error} Введите корректный номер [1-18]"
+	echo -e "${Error} Введите корректный номер [1-17]"
 	;;
 esac
 fi
