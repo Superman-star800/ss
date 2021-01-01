@@ -1884,8 +1884,8 @@ case "$num" in
 	Download_DB
         ;;
 	17)
-        Server_IP_Checker
-        ;;
+		Server_IP_Checker
+  ;;
 	*)
 	echo -e "${Error} Введите корректный номер [1-17]"
 	;;
