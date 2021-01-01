@@ -1885,8 +1885,8 @@ case "$num" in
         ;;
 	17)
         Server_IP_Checker
-	*)
         ;;
+	*)
 	echo -e "${Error} Введите корректный номер [1-17]"
 	;;
 esac
