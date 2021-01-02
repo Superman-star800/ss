@@ -1,1 +1,1 @@
-# ShadowsocksR-manager
+# Хуй вам
