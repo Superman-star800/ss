@@ -1,4 +1,3 @@
-
 #!/usr/bin/env bash
 PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
@@ -10,6 +9,7 @@ export PATH
 #=================================================
 
 sh_ver="7.7.7"
+serverip123="$(curl "ifconfig.me")"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 ssr_folder="/usr/local/shadowsocksr"
@@ -128,7 +128,7 @@ Get_IP(){
 			ip=$(wget -qO- -t1 -T2 members.3322.org/dyndns/getip)
 			if [[ -z "${ip}" ]]; then
 				ip="VPS_IP"
-			fi
+			fi 
 		fi
 	fi
 }
@@ -785,40 +785,6 @@ Modify_config_all(){
 	Modify_config_speed_limit_per_user
 	Modify_config_transfer
 	Modify_config_forbid
-}
-setiplimit(){
-	del_user_port=$ssr_port
-	del_user=$(cat "${config_user_mudb_file}"|grep '"port": '"${del_user_port}"',')
-	if [[ ! -z ${del_user} ]]; then
-		clear
-		echo -e "Настройка мер пресечений нарушения правил для клиента с портом $del_user_port"
-		echo -e 'cd "/usr/local/shadowsocksr"' > "/usr/local/shadowsocksr/${del_user_port}checking.sh"
-		echo -e "port=$del_user_port" > "/usr/local/shadowsocksr/${del_user_port}checking.sh"
-		echo -e 'user_IP_1=$(netstat -anp |grep '\''ESTABLISHED'\'' |grep '\''python'\'' |grep '\''tcp6'\'' |grep ":${port} " |awk '\''{print $5}'\'' |awk -F ":" '\''{print $1}'\'' |sort -u |grep -E -o "([0-9]{1,3}[\.]){3}[0-9]{1,3}")' >> "/usr/local/shadowsocksr/${del_user_port}checking.sh"
-		echo -e 'user_IP_total=$(echo -e "${user_IP_1}"|wc -l)' >> "/usr/local/shadowsocksr/${del_user_port}checking.sh"
-		echo -e 'if [[ $user_IP_total -gt 1 ]]; then
-	if [[ $user_IP_total -gt 1 ]]; then
-		cd "/usr/local/shadowsocksr"
-		ssr_password=$(date +%s%N | md5sum | head -c 16)
-		python "/usr/local/shadowsocksr/mujson_mgr.py" -e -p "${port}" -k "${ssr_password}"
-		sed -i "${port}checking.sh/d" "/usr/local/shadowsocksr/crontab.bak" 
-		crontab -r
-		crontab "/usr/local/shadowsocksr/crontab.bak"
-		rm "/usr/local/shadowsocksr/${port}checking.sh"
-	fi
-else
-	echo
-fi' >> "/usr/local/shadowsocksr/${del_user_port}checking.sh"
-		if [[ ! -e "/usr/local/shadowsocksr/crontab.bak" ]]; then
-			echo -e "\n* * * * * /bin/bash /usr/local/shadowsocksr/${del_user_port}checking.sh" > "/usr/local/shadowsocksr/crontab.bak"
-		else
-			echo -e "\n* * * * * /bin/bash /usr/local/shadowsocksr/${del_user_port}checking.sh" >> "/usr/local/shadowsocksr/crontab.bak"
-		fi
-		crontab "/usr/local/shadowsocksr/crontab.bak"
-		echo -e "При подключении более 1 IP адреса к ключу с портом $del_user_port, пароль будет сменен на случайный."	
-	else
-		echo -e "${Error} Введите корректный порт !"
-	fi	
 }
 Check_python(){
 	python_ver=`python -h`
@@ -1849,7 +1815,7 @@ fi
 	fi
 }
 Server_IP_Checker(){
-	 echo -e "IP данного сервера = $(curl "ifconfig.me") " && echo
+	 echo --e "IP данного сервера = $(curl "ifconfig.me") " && echo
 }
 check_sys
 [[ ${release} != "debian" ]] && [[ ${release} != "ubuntu" ]] && [[ ${release} != "centos" ]] && echo -e "${Error} 本脚本不支持当前系统 ${release} !" && exit 1
@@ -1863,6 +1829,9 @@ else
 	---- LEGENDA VPN USER CONTROL ----
 "
 echo -e "Салам алейкум, администратор сервера!
+
+IP сервера : $serverip123
+Всего на сервере : $user_total
 
   ${Green_font_prefix}1.${Font_color_suffix} Установить ShadowsocksR
   ${Green_font_prefix}2.${Font_color_suffix} Обновить ShadowsocksR
