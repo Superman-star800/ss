@@ -178,7 +178,7 @@ uploadbase(){
   cp /root/*.ovpn /etc/openvpn
 	cd "/etc/"
 	tar -czvf "openvpn.tar.gz" "openvpn" && clear
-	upload_link="$(curl -H "Max-Downloads: 100" -H "Max-Days: 50" -F filedata=@/etc/openvpn.tar.gz https://file.io)" && clear
+	upload_link="$(curl -F filedata=@/etc/openvpn.tar.gz https://file.io" | jq ".link" | sed 's/\"//g')" && clear
 	echo -e "${Red} $upload_link${Font_color_suffix} - ${Blue}Ссылка на скачивание Базы OpenVPN${Font_color_suffix}"
   echo -e "${Blue}База OpenVPN успешно выгружена!${Font_color_suffix}"
 	rm "openvpn.tar.gz"
