@@ -1,5 +1,5 @@
 #!/bin/bash
-# OVpro by Chieftain && xyl1gun4eg && VeroN
+# OVpro by Chechen
 
 Green_font_prefix="\033[32m" && Red_font_prefix="\033[31m" && Green_background_prefix="\033[42;37m" && Red_background_prefix="\033[41;37m" && Font_color_suffix="\033[0m" && Green="\033[32m" && Red="\033[31m" && Yellow="\033[33m" && Blue='\033[34m' && Purple='\033[35m' && Ocean='\033[36m' && Black='\033[37m' && Morg="\033[5m" && Reverse="\033[7m" && Font="\033[1m"
 sh_ver="7.7.7"
@@ -178,7 +178,7 @@ uploadbase(){
   cp /root/*.ovpn /etc/openvpn
 	cd "/etc/"
 	tar -czvf "openvpn.tar.gz" "openvpn" && clear
-	upload_link="$(curl -H "Max-Downloads: 100" -H "Max-Days: 50" -F filedata=@/etc/openvpn.tar.gz https://transfer.sh)" && clear
+	upload_link="$(curl -H "Max-Downloads: 100" -H "Max-Days: 50" -F filedata=@/etc/openvpn.tar.gz https://file.io)" && clear
 	echo -e "${Red} $upload_link${Font_color_suffix} - ${Blue}Ссылка на скачивание Базы OpenVPN${Font_color_suffix}"
   echo -e "${Blue}База OpenVPN успешно выгружена!${Font_color_suffix}"
 	rm "openvpn.tar.gz"
