@@ -157,14 +157,12 @@ adduser(){
 	[[ -z "${ans}" ]] && ans=1
 	if [[ ${ans} == "1" ]]; then
 	linktofile="$(curl -F "file=@/root/$client.ovpn" "https://file.io" | jq ".link" | sed 's/\"//g')" && clear
-  linktofile2="$(curl -H "Max-Downloads: 5" -H "Max-Days: 7" -F filedata=@/root/$client.ovpn https://transfer.sh)" && clear
 	echo "--------------------------------"
 	echo "-------------------------"
 	echo "----------------"
 	echo "---------"
 	echo -e "${Red} $linktofile${Font_color_suffix}"
-	echo -e "${Red} $linktofile2${Font_color_suffix}"
-	echo -e "${Blue}Ссылки на OpenVPN ключ $client${Font_color_suffix}"
+	echo -e "${Blue}Ссылка на OpenVPN ключ $client${Font_color_suffix}"
 	echo "---------"
 	echo "----------------"
 	echo "-------------------------"
@@ -1213,7 +1211,7 @@ else
 	clear
 	mv ~/OVpro/escflare ~/OVpro/.escflare 2>/dev/null
 	echo
-	echo  -e "${Morg}${Blue}Chieftain && xyl1gun4eg && VeroN [OVpro Control]${Font_color_suffix} "
+	echo  -e "${Morg}${Blue}Chechen [OVpro Control]${Font_color_suffix} "
 	echo
 echo -e "Приветствую, администратор сервера! Дата: ${Blue}$(date +"%d/%m/%Y")${Font_color_suffix}
 Всего ключей на сервере:" ${Blue}$number_of_clients${Font_color_suffix}
