@@ -1417,7 +1417,7 @@ ENDMARKER
 						fi
 						echo -e "А именно в $future"						
 						break
-					else
+					        else
 						echo -e "Выход..." && exit
 					fi
 					break
