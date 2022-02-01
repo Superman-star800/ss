@@ -3,13 +3,13 @@ PATH=/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin:~/bin
 export PATH
 
 #=================================================
-#	System Required: CentOS 6+/Debian 6+/Ubuntu 14.04+
-#	Description: Install the ShadowsocksR mudbjson server
+#	System Required: CentOS 6+/Debian 6+/Ubuntu 18.04+
+#	Description: Install the ShadowsocksR mudbjson server, and openvpn server
 #	Version: 1.0.26
+#   Translator: xyl1gun4eg
 #=================================================
 
 sh_ver="7.7.7"
-serverip123="$(curl "ifconfig.me")"
 filepath=$(cd "$(dirname "$0")"; pwd)
 file=$(echo -e "${filepath}"|awk -F "$0" '{print $1}')
 ssr_folder="/usr/local/shadowsocksr"
@@ -80,7 +80,7 @@ BBR_installation_status(){
 		fi
 	fi
 }
-# Настроить правила брандмауэра
+# 设置 防火墙规则
 Add_iptables(){
 	if [[ ! -z "${ssr_port}" ]]; then
 		iptables -I INPUT -m state --state NEW -m tcp -p tcp --dport ${ssr_port} -j ACCEPT
@@ -119,7 +119,7 @@ Set_iptables(){
 		chmod +x /etc/network/if-pre-up.d/iptables
 	fi
 }
-# Прочтите информацию о конфигурации
+# 读取 配置信息
 Get_IP(){
 	ip=$(wget -qO- -t1 -T2 ipinfo.io/ip)
 	if [[ -z "${ip}" ]]; then
@@ -128,7 +128,7 @@ Get_IP(){
 			ip=$(wget -qO- -t1 -T2 members.3322.org/dyndns/getip)
 			if [[ -z "${ip}" ]]; then
 				ip="VPS_IP"
-			fi 
+			fi
 		fi
 	fi
 }
@@ -324,7 +324,7 @@ ss_ssr_determine(){
 	fi
 	ssr_link_qr
 }
-# Отображение информации о конфигурации
+# Display configuration information
 View_User(){
 	SSR_installation_status
 	List_port_user
@@ -347,24 +347,31 @@ View_User_info(){
 	ip=$(cat ${config_user_api_file}|grep "SERVER_PUB_ADDR = "|awk -F "[']" '{print $2}')
 	[[ -z "${ip}" ]] && Get_IP
 	ss_ssr_determine
+	{
+	cat "/usr/local/shadowsocksr/dayslast.csv" | grep $port
+	} > "/usr/local/shadowsocksr/dayslast2.csv"
+	checkonempty=$(cat "/usr/local/shadowsocksr/dayslast2.csv")
+	[[ -z ${checkonempty} ]] && checkonempty="y"
+	if [[ ${checkonempty} == [Yy] ]]; then
+		clear
+		autodelcfg="Автоудаление не настроено"
+	else
+		daytodelete=$(csvtool col 2 "/usr/local/shadowsocksr/dayslast2.csv")
+		deletetime=$((($(date +%s --date "$daytodelete")-$(date +%s))/(3600*24)))
+		autodelcfg="До удаления $deletetime дней"
+	fi
+	rm "/usr/local/shadowsocksr/dayslast2.csv"
 	clear && echo "===================================================" && echo
 	echo -e " Информация о пользователе [${user_name}] ：" && echo
 	echo -e " IP\t    : ${Green_font_prefix}${ip}${Font_color_suffix}"
 	echo -e " Порт\t    : ${Green_font_prefix}${port}${Font_color_suffix}"
 	echo -e " Пароль\t    : ${Green_font_prefix}${password}${Font_color_suffix}"
 	echo -e " Шифрование : ${Green_font_prefix}${method}${Font_color_suffix}"
-	echo -e " Протокол   : ${Red_font_prefix}${protocol}${Font_color_suffix}"
-	echo -e " Obfs\t    : ${Red_font_prefix}${obfs}${Font_color_suffix}"
 	echo -e " Количество устройств : ${Green_font_prefix}${protocol_param}${Font_color_suffix}"
-	echo -e " Общая скорость ключа : ${Green_font_prefix}${speed_limit_per_con} KB/S${Font_color_suffix}"
-	echo -e " Скорость соединения у каждого пользователя : ${Green_font_prefix}${speed_limit_per_user} KB/S${Font_color_suffix}"
-	echo -e " Запрещенные порты : ${Green_font_prefix}${forbidden_port} ${Font_color_suffix}"
-	echo
-	echo -e " Использованный трафик : Upload: ${Green_font_prefix}${u}${Font_color_suffix} + Download: ${Green_font_prefix}${d}${Font_color_suffix} = ${Green_font_prefix}${transfer_enable_Used_2}${Font_color_suffix}"
-	echo -e " Осталось трафика : ${Green_font_prefix}${transfer_enable_Used} ${Font_color_suffix}"
-	echo -e " Всего трафика : ${Green_font_prefix}${transfer_enable} ${Font_color_suffix}"
 	echo -e "${ss_link}"
-	echo -e "${ssr_link}"
+	echo
+	echo -e " $autodelcfg"
+	echo
 	echo -e " ${Green_font_prefix} Подсказка: ${Font_color_suffix}
  Откройте ссылку в браузере для получения QR кода。"
 	echo && echo "==================================================="
@@ -385,7 +392,7 @@ Set_config_port(){
 	[[ -z "${how_to_port}" ]] && how_to_port="1"
 	if [[ ${how_to_port} == "1" ]]; then
 		echo -e "Порт автоматически сгенерирован."
-		ssr_port=$(shuf -i 1000-9999 -n 1)
+		ssr_port=$(shuf -i 100-999 -n 1)
 		while true
 		do
 		echo $((${ssr_port}+0)) &>/dev/null
@@ -394,10 +401,10 @@ Set_config_port(){
 			echo && echo ${Separator_1} && echo -e "	Порт: : ${Green_font_prefix}${ssr_port}${Font_color_suffix}" && echo ${Separator_1} && echo
 			break
 		else
-			echo -e "${Error} Введите корректный порт(1-65535)"
+			echo -e "${Error} Введите корректный порт(1-999)"
 		fi
 	else
-		echo -e "${Error} Введите корректный порт(1-65535)"
+		echo -e "${Error} Введите корректный порт(1-999)"
 	fi
 	done
 	elif [[ ${how_to_port} == "2" ]]; then
@@ -411,15 +418,15 @@ Set_config_port(){
 					echo && echo ${Separator_1} && echo -e "	Порт: : ${Green_font_prefix}${ssr_port}${Font_color_suffix}" && echo ${Separator_1} && echo
 					break
 				else
-					echo -e "${Error} Введите корректный порт(1-65535)"
+					echo -e "${Error} Введите корректный порт(1-999)"
 				fi
 			else
-				echo -e "${Error} Введите корректный порт(1-65535)"
+				echo -e "${Error} Введите корректный порт(1-999)"
 			fi
 		done
 	else 
 		echo -e "Порт автоматически сгенерирован."
-		ssr_port=$(shuf -i 1000-9999 -n 1)
+		ssr_port=$(shuf -i 100-999 -n 1)
 		while true
 		do
 		echo $((${ssr_port}+0)) &>/dev/null
@@ -428,10 +435,10 @@ Set_config_port(){
 			echo && echo ${Separator_1} && echo -e "	Порт: : ${Green_font_prefix}${ssr_port}${Font_color_suffix}" && echo ${Separator_1} && echo
 			break
 			else
-			echo -e "${Error} Введите корректный порт(1-65535)"
+			echo -e "${Error} Введите корректный порт(1-999)"
 			fi
 		else
-		echo -e "${Error} Введите корректный порт(1-65535)"
+		echo -e "${Error} Введите корректный порт(1-999)"
 		fi
 		done
 	fi
@@ -452,69 +459,7 @@ Set_config_password(){
 	echo && echo ${Separator_1} && echo -e "	Пароль : ${Green_font_prefix}${ssr_password}${Font_color_suffix}" && echo ${Separator_1} && echo
 }
 Set_config_method(){
-	echo -e "Выберите метод шифрования
-	
- ${Green_font_prefix} 1.${Font_color_suffix} none
- ${Tip} Если вы хотите использовать метод шифорвания типа auth_chain_* лучше используйте none (Потому что у этого типа есть RC4 шифорвания)，что может вызвать проблемы
- 
- ${Green_font_prefix} 2.${Font_color_suffix} rc4
- ${Green_font_prefix} 3.${Font_color_suffix} rc4-md5
- ${Green_font_prefix} 4.${Font_color_suffix} rc4-md5-6
- 
- ${Green_font_prefix} 5.${Font_color_suffix} aes-128-ctr
- ${Green_font_prefix} 6.${Font_color_suffix} aes-192-ctr
- ${Green_font_prefix} 7.${Font_color_suffix} aes-256-ctr
- 
- ${Green_font_prefix} 8.${Font_color_suffix} aes-128-cfb
- ${Green_font_prefix} 9.${Font_color_suffix} aes-192-cfb
- ${Green_font_prefix}10.${Font_color_suffix} aes-256-cfb
- 
- ${Green_font_prefix}11.${Font_color_suffix} aes-128-cfb8
- ${Green_font_prefix}12.${Font_color_suffix} aes-192-cfb8
- ${Green_font_prefix}13.${Font_color_suffix} aes-256-cfb8
- 
- ${Green_font_prefix}14.${Font_color_suffix} salsa20
- ${Green_font_prefix}15.${Font_color_suffix} chacha20
- ${Green_font_prefix}16.${Font_color_suffix} chacha20-ietf
- ${Tip} salsa20/chacha20-методы шифорвания требуют libsodium, иначе скрипт не запустится !" && echo
-	read -e -p "(По умолчанию: 16. chacha20-ietf):" ssr_method
-	[[ -z "${ssr_method}" ]] && ssr_method="16"
-	if [[ ${ssr_method} == "1" ]]; then
-		ssr_method="none"
-	elif [[ ${ssr_method} == "2" ]]; then
-		ssr_method="rc4"
-	elif [[ ${ssr_method} == "3" ]]; then
-		ssr_method="rc4-md5"
-	elif [[ ${ssr_method} == "4" ]]; then
-		ssr_method="rc4-md5-6"
-	elif [[ ${ssr_method} == "5" ]]; then
-		ssr_method="aes-128-ctr"
-	elif [[ ${ssr_method} == "6" ]]; then
-		ssr_method="aes-192-ctr"
-	elif [[ ${ssr_method} == "7" ]]; then
-		ssr_method="aes-256-ctr"
-	elif [[ ${ssr_method} == "8" ]]; then
-		ssr_method="aes-128-cfb"
-	elif [[ ${ssr_method} == "9" ]]; then
-		ssr_method="aes-192-cfb"
-	elif [[ ${ssr_method} == "10" ]]; then
-		ssr_method="aes-256-cfb"
-	elif [[ ${ssr_method} == "11" ]]; then
-		ssr_method="aes-128-cfb8"
-	elif [[ ${ssr_method} == "12" ]]; then
-		ssr_method="aes-192-cfb8"
-	elif [[ ${ssr_method} == "13" ]]; then
-		ssr_method="aes-256-cfb8"
-	elif [[ ${ssr_method} == "14" ]]; then
-		ssr_method="salsa20"
-	elif [[ ${ssr_method} == "15" ]]; then
-		ssr_method="chacha20"
-	elif [[ ${ssr_method} == "16" ]]; then
-		ssr_method="chacha20-ietf"
-	else
-		ssr_method="chacha20-ietf"
-	fi
-	echo && echo ${Separator_1} && echo -e "	Шифрование : ${Green_font_prefix}${ssr_method}${Font_color_suffix}" && echo ${Separator_1} && echo
+ssr_method="aes-128-ctr"
 }
 Set_config_protocol(){
 ssr_protocol="origin"
@@ -572,7 +517,7 @@ Set_config_speed_limit_per_user(){
 	else
 		echo -e "${Error} Введите корректный номер(1-131072)"
 	fi
-	done
+  done
 }
 Set_config_transfer(){
 	while true
@@ -656,7 +601,7 @@ Set_user_api_server_pub_addr(){
 			do
 			read -e -p "${Error} Введите IP сервера сами!" ssr_server_pub_addr
 			if [[ -z "$ssr_server_pub_addr" ]]; then
-				echo -e "${Error} Не может быть пустым！"
+				echo -e "${Error} Поле не может быть пустым！"
 			else
 				break
 			fi
@@ -815,7 +760,7 @@ Debian_apt(){
 		apt-get install -y vim unzip cron
 	fi
 }
-# Скачать ShadowsocksR
+# 下载 ShadowsocksR
 Download_SSR(){
 	cd "/usr/local"
 	wget -N --no-check-certificate "https://github.com/ToyoDAdoubiBackup/shadowsocksr/archive/manyuser.zip"
@@ -857,7 +802,7 @@ Service_SSR(){
 	fi
 	echo -e "${Info} Скрипт для управления ShadowsocksR успешно установлен !"
 }
-# Установить парсер JQ
+# 安装 JQ解析器
 JQ_install(){
 	if [[ ! -e ${jq_file} ]]; then
 		cd "${ssr_folder}"
@@ -875,7 +820,7 @@ JQ_install(){
 		echo -e "${Info} Парсер JQ успешно установлен..."
 	fi
 }
-# Зависимость от установки
+# 安装 依赖
 Installation_dependency(){
 	if [[ ${release} == "centos" ]]; then
 		Centos_yum
@@ -896,27 +841,28 @@ Installation_dependency(){
 Install_SSR(){
 	check_root
 	[[ -e ${ssr_folder} ]] && echo -e "${Error} ShadowsocksR уже установлен !" && exit 1
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Set_user_api_server_pub_addr
 	Set_config_all
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Installation_dependency
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Download_SSR
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Service_SSR
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	JQ_install
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Add_port_user "install"
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Set_iptables
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Add_iptables
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Save_iptables
-	echo -e "${Info} типа че то происходит..."
+	echo -e "${Info} Подождите пожалуйста..."
 	Start_SSR
+	Install_Libsodium
 	Get_User_info "${ssr_port}"
 	View_User_info
 }
@@ -966,6 +912,203 @@ Check_Libsodium_ver(){
 	[[ -z ${Libsodiumr_ver} ]] && Libsodiumr_ver=${Libsodiumr_ver_backup}
 	echo -e "${Info} Последняя версия libsodium: ${Green_font_prefix}${Libsodiumr_ver}${Font_color_suffix} !"
 }
+ssautodel(){
+	user_info=$(python "/usr/local/shadowsocksr/mujson_mgr.py" -l)
+	user_total=$(echo "${user_info}"|wc -l)
+	[[ -z ${user_info} ]] && echo -e "${Error} Пользователь не найден !" && exit 1
+	user_list_all=""
+	for((integer = 1; integer <= ${user_total}; integer++))
+	do
+		user_port=$(echo "${user_info}"|sed -n "${integer}p"|awk '{print $4}')
+		user_username=$(echo "${user_info}"|sed -n "${integer}p"|awk '{print $2}'|sed 's/\[//g;s/\]//g')
+		Get_User_transfer "${user_port}"
+		transfer_enable_Used_233=$(echo $((${transfer_enable_Used_233}+${transfer_enable_Used_2_1})))
+		{
+		cat "/usr/local/shadowsocksr/dayslast.csv" | grep $user_port
+		} > "/usr/local/shadowsocksr/dayslast2.csv"
+		checkonempty=$(cat "/usr/local/shadowsocksr/dayslast2.csv")
+		[[ -z ${checkonempty} ]] && checkonempty="y"
+		if [[ ${checkonempty} == [Yy] ]]; then
+			clear
+			autodelcfg="Автоудаление не настроено"
+		else
+			daytodelete=$(csvtool col 2 "/usr/local/shadowsocksr/dayslast2.csv")
+			deletetime=$((($(date +%s --date "$daytodelete")-$(date +%s))/(3600*24)))
+			autodelcfg="До удаления $deletetime дней"
+		fi
+		rm "/usr/local/shadowsocksr/dayslast2.csv"
+		user_list_all=${user_list_all}"Пользователь: ${Green_font_prefix} "${user_username}"${Font_color_suffix} Порт: ${Green_font_prefix}"${user_port}"${Font_color_suffix} Трафик: ${Green_font_prefix}${transfer_enable_Used_2}${Font_color_suffix}\n${Green_font_prefix}${autodelcfg}${Font_color_suffix}\n"
+	done
+	Get_User_transfer_all
+	echo -e "Выберите клиента для настройки автоудаления:"
+	echo && echo -e "=== Всего пользователей: ${Green_background_prefix} "${user_total}" ${Font_color_suffix}"
+	echo -e ${user_list_all}
+	echo -e "=== Общий трафик всех пользователей: ${Green_background_prefix} ${transfer_enable_Used_233_2} ${Font_color_suffix}\n"
+	echo -e "Введите порт аккаунта для настройки автоудаления"
+	read -e -p "(По умолчанию: отмена):" del_user_port
+	del_user=$(cat "${config_user_mudb_file}"|grep '"port": '"${del_user_port}"',')
+	if [[ ! -z ${del_user} ]]; then
+		{
+		cat "/usr/local/shadowsocksr/dayslast.csv" | grep "$del_user_port,"
+		} > "/usr/local/shadowsocksr/dayslast2.csv"
+		checkonempty=$(cat "/usr/local/shadowsocksr/dayslast.csv" | grep $del_user_port,)
+		if [[ -z "$checkonempty" ]]; then		
+			apt install at
+			sudo systemctl enable --now atd
+			port=${del_user_port}
+			clear		
+			read -e -p "Введите период удаления в днях:" periodofdel
+			at now +$periodofdel days <<ENDMARKER
+python "/usr/local/shadowsocksr/mujson_mgr.py" -d -p "${del_user_port}"
+iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+iptables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+iptables-save > /etc/iptables.up.rules
+ip6tables-save > /etc/ip6tables.up.rules
+sed -i "/$port,/d" /usr/local/shadowsocksr/dayslast.csv
+ENDMARKER
+			clear
+			echo -e "Пользователь с портом ${Green_font_prefix}$del_user_port${Font_color_suffix} будет удален через $periodofdel дней."
+			future=$(date --date="$periodofdel days" +"%b %d %Y")
+			if [[ ! -e /usr/local/shadowsocksr/dayslast.csv ]]; then
+				echo "$del_user_port,$future" > "/usr/local/shadowsocksr/dayslast.csv"
+			else
+				echo "$del_user_port,$future" >> "/usr/local/shadowsocksr/dayslast.csv"
+			fi
+			echo -e "А именно в $future"
+			rm "/usr/local/shadowsocksr/dayslast2.csv"
+		else
+			rm "/usr/local/shadowsocksr/dayslast2.csv"
+			for((integer = 1; integer <= 10000; integer++))
+			do
+				testonfind=$(at -c $integer | grep "$del_user_port")
+				checkdouble=$(echo $testonfind | grep $del_user_port)
+				if [[ -n "$checkdouble" ]]; then
+  					{
+					cat "/usr/local/shadowsocksr/dayslast.csv" | grep $del_user_port
+					} > "/usr/local/shadowsocksr/dayslast2.csv"			
+  					daytodelete=$(csvtool col 2 "/usr/local/shadowsocksr/dayslast2.csv")
+					deletetime=$((($(date +%s --date "$daytodelete")-$(date +%s))/(3600*24)))
+  					clear
+  					echo "Найден клиент с портом $del_user_port с UID автоудаления $integer."
+  					echo "Клиент $del_user_port будет удален через $deletetime дней"
+	 				read -e -p "Хотите перенастроить автоудаление пользователя?(Y/n):" delcfgyn
+					[[ -z ${delcfgyn} ]] && delcfgyn="Nn"
+					if [[ ${delcfgyn} == [Nn] ]]; then
+						exit
+					elif [[ ${delcfgyn} == [Yy] ]]; then 				
+						apt install at
+						sudo systemctl enable --now atd
+	  					sed -i "/$del_user_port,/d" "/usr/local/shadowsocksr/dayslast.csv" 
+	  					at -r $integer
+						port=${del_user_port}
+						clear
+						read -e -p "Введите период удаления в днях:" periodofdel			
+						at now +$periodofdel days <<ENDMARKER
+python "/usr/local/shadowsocksr/mujson_mgr.py" -d -p "${del_user_port}"
+iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+iptables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+iptables-save > /etc/iptables.up.rules
+ip6tables-save > /etc/ip6tables.up.rules
+sed -i "/$port,/d" /usr/local/shadowsocksr/dayslast.csv
+ENDMARKER
+						clear
+						echo -e "Пользователь с портом ${Green_font_prefix}$del_user_port${Font_color_suffix} будет удален через $periodofdel дней."
+						future=$(date --date="$periodofdel days" +"%b %d %Y")
+						if [[ ! -e /usr/local/shadowsocksr/dayslast.csv ]]; then
+							echo "$del_user_port,$future" > "/usr/local/shadowsocksr/dayslast.csv"
+						else
+							echo "$del_user_port,$future" >> "/usr/local/shadowsocksr/dayslast.csv"
+						fi
+						echo -e "А именно в $future"
+						rm "/usr/local/shadowsocksr/dayslast2.csv"
+						exit
+					fi
+				fi			
+			done
+		fi
+	else
+		echo -e "${Error} Введите корректный порт !"
+	fi	
+}
+ssautodeltransfer(){
+	clear
+	echo && echo -e "Что будем делать?
+  ${Green_font_prefix}1.${Font_color_suffix} Загрузить базу автоудаления в облако
+  ${Green_font_prefix}2.${Font_color_suffix} Скачать базу автоудаления по ссылке" && echo
+	read -p "Действие: " option
+	until [[ "$option" =~ ^[1-2]$ ]]; do
+		echo "$option: выбор неверный."
+		read -p "Действие: " option
+	done
+	case "$option" in
+		1)
+		uploadautodelss
+		;;
+		2)
+		activateautodelss
+	esac	
+}
+uploadautodelss(){
+	clear
+	echo -e "Загружаем базу автоудаления в облако..."
+	linktofile="$(curl -F "file=@/usr/local/shadowsocksr/dayslast.csv" "https://file.io" | jq ".link")"
+	[[ -z ${linktofile} ]] && linktofile="n"
+	if [[ ${linktofile} == [n] ]]; then
+		echo -e "Файл конфигурации отсутсвует или поврежден."
+	else
+		echo -e "$linktofile - ссылка на базу автоудаления." && echo
+	fi	
+}
+activateautodelss(){
+	cd /root
+	echo -e "${Green_font_prefix} Скачать базу автоудаления по ссылке? ВНИМАНИЕ: ПРОДОЛЖЕНИЕ ПРИВЕДЕТ К УДАЛЕНИЮ СТАРОЙ БАЗЫ!${Font_color_suffix}(y/n)"
+	read -e -p "(По умолчанию: отмена):" base_override
+	[[ -z "${base_override}" ]] && echo "Отмена..." && exit 1
+	if [[ ${base_override} == "y" ]]; then
+		read -e -p "Введите ссылку на базу:(Если вы ее не сделали, то введите 'n')" base_link
+		[[ -z "${base_link}" ]] && echo "Отмена..." && exit 1
+		if [[ ${base_link} == "n" ]]; then
+			echo "Отмена..." && exit 1
+		else
+			curl -o "dayslast.csv" "$base_link"
+			rm "/usr/local/shadowsocksr/dayslast.csv"
+			mv "dayslast.csv" "/usr/local/shadowsocksr/dayslast.csv"
+			number_of_clients_auto=$(tail -n +1 /usr/local/shadowsocksr/dayslast.csv | grep -c ",")
+			if [[ "$number_of_clients_auto" = 0 ]]; then
+				echo
+				echo "Клиенты отсутсвуют, кого вы хотите автоудалить?!"
+				exit
+			fi
+			for((integer = 1; integer <= ${number_of_clients_auto}; integer++))
+			do
+				rm "/usr/local/shadowsocksr/dayslastauto.csv"
+				{
+				cat /usr/local/shadowsocksr/dayslast.csv | sed -n "$integer"p
+				} > "/usr/local/shadowsocksr/dayslastauto.csv"
+				port=$(csvtool col 1 "/usr/local/shadowsocksr/dayslastauto.csv")
+				daytodelete=$(csvtool col 2 "/usr/local/shadowsocksr/dayslastauto.csv")
+				periodofdel=$((($(date +%s --date "$daytodelete")-$(date +%s))/(3600*24)))				
+				at now +$periodofdel days <<ENDMARKER
+python "/usr/local/shadowsocksr/mujson_mgr.py" -d -p "${port}"
+iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+iptables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+iptables-save > /etc/iptables.up.rules
+ip6tables-save > /etc/ip6tables.up.rules
+sed -i "/$port,/d" /usr/local/shadowsocksr/dayslast.csv 
+ENDMARKER
+			rm "/usr/local/shadowsocksr/dayslastauto.csv"
+			done
+		fi
+	elif [[ ${base_override} == "n" ]]; then
+		echo "Отмена..." && exit 1
+	fi	
+}
 Install_Libsodium(){
 	if [[ -e ${Libsodiumr_file} ]]; then
 		echo -e "${Error} libsodium уже установлен, желаете перезаписать(обновить)？[y/N]"
@@ -1006,7 +1149,7 @@ Install_Libsodium(){
 	[[ ! -e ${Libsodiumr_file} ]] && echo -e "${Error} Установка libsodium неуспешна !" && exit 1
 	echo && echo -e "${Info} libsodium успешно установлен !" && echo
 }
-# Отображение информации о подключении
+# 显示 连接信息
 debian_View_user_connection_info(){
 	format_1=$1
 	user_info=$(python mujson_mgr.py -l)
@@ -1028,8 +1171,22 @@ debian_View_user_connection_info(){
 				user_IP=`echo -e "\n${user_IP_1}"`
 			fi
 		fi
+		{
+		cat "/usr/local/shadowsocksr/dayslast.csv" | grep $user_port
+		} > "/usr/local/shadowsocksr/dayslast2.csv"
+		checkonempty=$(cat "/usr/local/shadowsocksr/dayslast2.csv")
+		[[ -z ${checkonempty} ]] && checkonempty="y"
+		if [[ ${checkonempty} == [Yy] ]]; then
+			clear
+			autodelcfg="Автоудаление не настроено"
+		else
+			daytodelete=$(csvtool col 2 "/usr/local/shadowsocksr/dayslast2.csv")
+			deletetime=$((($(date +%s --date "$daytodelete")-$(date +%s))/(3600*24)))
+			autodelcfg="До удаления $deletetime дней"
+		fi
+		rm "/usr/local/shadowsocksr/dayslast2.csv"
 		user_info_233=$(python mujson_mgr.py -l|grep -w "${user_port}"|awk '{print $2}'|sed 's/\[//g;s/\]//g')
-		user_list_all=${user_list_all}"Юзер: ${Green_font_prefix}"${user_info_233}"${Font_color_suffix} Порт: ${Green_font_prefix}"${user_port}"${Font_color_suffix} Кол-во IP: ${Green_font_prefix}"${user_IP_total}"${Font_color_suffix} Подкл. юзеры: ${Green_font_prefix}${user_IP}${Font_color_suffix}\n"
+		user_list_all=${user_list_all}"Юзер: ${Green_font_prefix}"${user_info_233}"${Font_color_suffix} Порт: ${Green_font_prefix}"${user_port}"${Font_color_suffix} Кол-во IP: ${Green_font_prefix}"${user_IP_total}"${Font_color_suffix} Подкл. юзеры: ${Green_font_prefix}${user_IP}${Font_color_suffix}\n${Green_font_prefix}${autodelcfg}${Font_color_suffix}\n"
 		user_IP=""
 	done
 	echo -e "Всего пользователей: ${Green_background_prefix} "${user_total}" ${Font_color_suffix} Общее число IP адресов: ${Green_background_prefix} "${IP_total}" ${Font_color_suffix} "
@@ -1104,14 +1261,13 @@ get_IP_address(){
 		done
 	fi
 }
-# Изменить конфигурацию пользователя
 Modify_port(){
 	List_port_user
 	while true
 	do
 		echo -e "Введите порт пользователя, аккаунт которого нужно изменить"
 		read -e -p "(По умолчанию: отмена):" ssr_port
-		[[ -z "${ssr_port}" ]] && echo -e "已取消..." && exit 1
+		[[ -z "${ssr_port}" ]] && echo -e "Отмена..." && exit 1
 		Modify_user=$(cat "${config_user_mudb_file}"|grep '"port": '"${ssr_port}"',')
 		if [[ ! -z ${Modify_user} ]]; then
 			break
@@ -1218,7 +1374,7 @@ Add_port_user(){
 	else
 		while true
 		do
-			Set_config_all
+			whattodo
 			match_port=$(python mujson_mgr.py -l|grep -w "port ${ssr_port}$")
 			[[ ! -z "${match_port}" ]] && echo -e "${Error} Порт [${ssr_port}] уже используется, выберите другой !" && exit 1
 			match_username=$(python mujson_mgr.py -l|grep -w "user \[${ssr_user}]")
@@ -1230,37 +1386,40 @@ Add_port_user(){
 			else
 				Add_iptables
 				Save_iptables
-				setiplimit
 				echo -e "${Info} Пользователь добавлен успешно ${Green_font_prefix}[Пользователь: ${ssr_user} , Порт: ${ssr_port}]${Font_color_suffix} "
-				echo
-				read -e -p "Хотите продолжить настройку пользователя？[Y/n]:" addyn
-				[[ -z ${addyn} ]] && addyn="y"
-				if [[ ${addyn} == [Nn] ]]; then
-					Get_User_info "${ssr_port}"
 					View_User_info
+					echo
 					read -e -p "Хотите настроить автоудаление пользователя?[Y/n]:" autoyn
 					[[ -z ${autoyn} ]] && autoyn="y"
 					if [[ ${autoyn} == [Yy] ]]; then
 						apt install at
 						sudo systemctl enable --now atd
 						port=${ssr_port}
-						clear
-						echo
-						echo
-						echo
-						echo
-						echo		
+						clear		
 						read -e -p "Введите период удаления в днях:" periodofdel
 						at now +$periodofdel days <<ENDMARKER
-python "/usr/local/shadowsocksr/mujson_mgr.py" -d -p '${ssr_port}'
+python "/usr/local/shadowsocksr/mujson_mgr.py" -d -p "${ssr_port}"
+iptables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+iptables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m tcp -p tcp --dport ${port} -j ACCEPT
+ip6tables -D INPUT -m state --state NEW -m udp -p udp --dport ${port} -j ACCEPT
+iptables-save > /etc/iptables.up.rules
+ip6tables-save > /etc/ip6tables.up.rules
+sed -i "/$port,/d" /usr/local/shadowsocksr/dayslast.csv
 ENDMARKER
 						clear
-						echo
-						echo
-						echo
 						echo -e "Пользователь с портом ${Green_font_prefix}$ssr_port${Font_color_suffix} будет удален через $periodofdel дней."
+						future=$(date --date="$periodofdel days" +"%b %d %Y")
+						if [[ ! -e /usr/local/shadowsocksr/dayslast.csv ]]; then
+							echo "$ssr_port,$future" > "/usr/local/shadowsocksr/dayslast.csv"
+						else
+							echo "$ssr_port,$future" >> "/usr/local/shadowsocksr/dayslast.csv"
+						fi
+						echo -e "А именно в $future"						
 						break
-					fi					
+					else
+						echo -e "Выход..." && exit
+					fi
 					break
 				else
 					echo -e "${Info} Продолжение изменения конфигурации пользователя..."
@@ -1286,6 +1445,7 @@ Del_port_user(){
 			else
 				Del_iptables
 				Save_iptables
+				sed -i "/$del_user_port,/d" "/usr/local/shadowsocksr/dayslast.csv"
 				echo -e "${Info} Удаление пользователя успешно ${Green_font_prefix}[Порт: ${del_user_port}]${Font_color_suffix} "
 				echo
 				read -e -p "Хотите продолжить удаление пользователей？[Y/n]:" delyn
@@ -1305,7 +1465,7 @@ Del_port_user(){
 }
 Manually_Modify_Config(){
 	SSR_installation_status
-	nano ${config_user_mudb_file}
+	vi ${config_user_mudb_file}
 	echo "Вы хотите перезагрузить ShadowsocksR сейчас？[Y/n]" && echo
 	read -e -p "(По умолчанию: y):" yn
 	[[ -z ${yn} ]] && yn="y"
@@ -1452,7 +1612,7 @@ View_Log(){
 	echo && echo -e "${Tip} Нажмите ${Red_font_prefix}Ctrl+C${Font_color_suffix} для остановки просмотра лога" && echo -e "Если вам нужен полный лог, то напишите ${Red_font_prefix}cat ${ssr_log_file}${Font_color_suffix} 。" && echo
 	tail -f ${ssr_log_file}
 }
-# Резкая скорость
+# 锐速
 Configure_Server_Speeder(){
 	echo && echo -e "Что вы хотите сделать？
  ${Green_font_prefix}1.${Font_color_suffix} Установить Sharp Speed
@@ -1620,7 +1780,7 @@ Status_BBR(){
 	BBR_installation_status
 	bash "${BBR_file}" status
 }
-# Прочие функции
+# 其他功能
 Other_functions(){
 	echo && echo -e "  Что будем делать？
 	
@@ -1657,12 +1817,12 @@ Other_functions(){
 		echo -e "${Error} Введите корректный номер [1-7]" && exit 1
 	fi
 }
-# Запретить BT PT SPAM
+# 封禁 BT PT SPAM
 BanBTPTSPAM(){
 	wget -N --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/ban_iptables.sh && chmod +x ban_iptables.sh && bash ban_iptables.sh banall
 	rm -rf ban_iptables.sh
 }
-# Разблокировать BT PT SPAM
+# 解封 BT PT SPAM
 UnBanBTPTSPAM(){
 	wget -N --no-check-certificate https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/ban_iptables.sh && chmod +x ban_iptables.sh && bash ban_iptables.sh unbanall
 	rm -rf ban_iptables.sh
@@ -1775,7 +1935,7 @@ Update_Shell(){
 	wget -N --no-check-certificate "https://raw.githubusercontent.com/ToyoDAdoubiBackup/doubi/master/ssrmu.sh" && chmod +x ssrmu.sh
 	echo -e "Скрипт успешно обновлен до версии[ ${sh_new_ver} ] !(Так как обновление - перезапись, то далее могут выйти ошибки, просто инорируйте их)" && exit 0
 }
-# Отображение статуса меню
+# 显示 菜单状态
 menu_status(){
 	if [[ -e ${ssr_folder} ]]; then
 		check_pid
@@ -1789,34 +1949,44 @@ menu_status(){
 		echo -e " Текущий статус: ${Red_font_prefix}не установлен${Font_color_suffix}"
 	fi
 }
+Donate_Link(){
+	echo -e "${Green_font_prefix}Если вы хотите помочь создателю, то можете задонатить ему на чай :3
+	Реквизиты:
+	Qiwi: qiwi.com/n/XYL1GUN4EG
+	Visa Card: 4890494709980528
+	btc: 1CUAEkoPFF5HgFPS6JphohkTxVsFbt92e4${Font_color_suffix}"
+}
 Upload_DB(){
-	echo -e "${Green_font_prefix}Перед вам выйдет строка с ссылкой на файлообменник, откуда вы сможете скачать базу данных. 
-	Пример строки:{'success':'true','key':**********,'link':https://file.io/***********,'expiry':14 days} 
-	Введите строку из поля 'link' в браузере, и ваша база данных будет скачана. ${Font_color_suffix}"
-	curl -F "file=@/usr/local/shadowsocksr/mudb.json" "https://file.io" && echo -e "${Green_font_prefix}Закрытие программы...${Font_color_suffix}"
+	upload_link="$(curl -F "file=@/usr/local/shadowsocksr/mudb.json" "https://file.io" | jq ".link")" && clear 
+	echo -e "$upload_link - ссылка на базу пользователей ShadowSocks
+	Используйте его в пункте для скачивания базы в скрипте на втором сервере!"
 }
 Download_DB(){
 	echo -e "${Green_font_prefix} Внимание: это приведет к перезаписи всей базы пользователей, вы готовы что хотите продолжить?${Font_color_suffix}(y/n)"
 	read -e -p "(По умолчанию: отмена):" base_override
 	[[ -z "${base_override}" ]] && echo "Отмена..." && exit 1
 	if [[ ${base_override} == "y" ]]; then
-		read -e -p "${Green_font_prefix} Введите ссылку на базу: (полученная в 15 пункте):(Если вы ее не сделали, то введите 'n')${Font_color_suffix}" base_link && echo
+		read -e -p "Введите ссылку на базу: (полученная в 15 пункте):(Если вы ее не сделали, то введите 'n')" base_link
 		[[ -z "${base_link}" ]] && echo "Отмена..." && exit 1
 		if [[ ${base_link} == "n" ]]; then
-   echo "Отмена..." && exit 1
-else 
-   cd /usr/local/shadowsocksr
-   rm "/usr/local/shadowsocksr/mudb.json"
-   curl -o "mudb.json" "${base_link}"   
-   echo -e "База успешно импортирована!"
-fi
+			echo "Отмена..." && exit 1
+		else
+			cd /usr/local/shadowsocksr
+			rm "/usr/local/shadowsocksr/mudb.json"
+			curl -o "mudb.json" "${base_link}"
+			Restart_SSR			
+		fi
 	elif [[ ${base_override} == "n" ]]; then
 		echo "Отмена..." && exit 1
 	fi
 }
-Server_IP_Checker(){
-	 echo --e "IP данного сервера = $(curl "ifconfig.me") " && echo
+Fastexit(){
+	exit
 }
+Server_IP_Checker(){
+	 echo -e "IP данного сервера = $(curl "ifconfig.me") " && echo
+}
+apt install jq && apt install csvtool
 check_sys
 [[ ${release} != "debian" ]] && [[ ${release} != "ubuntu" ]] && [[ ${release} != "centos" ]] && echo -e "${Error} 本脚本不支持当前系统 ${release} !" && exit 1
 action=$1
@@ -1825,90 +1995,112 @@ if [[ "${action}" == "clearall" ]]; then
 elif [[ "${action}" == "monitor" ]]; then
 	crontab_monitor_ssr
 else
-	echo -e " Скрипт модерации сервера ShadowsocksR ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
-	---- LEGENDA VPN USER CONTROL ----
-"
-echo -e "Салам алейкум, администратор сервера!
-
+domainofserver=$(cat ${config_user_api_file} | grep "SERVER_PUB_ADDR = " | awk -F "[']" '{print $2}')
+serverip123=$(curl ifconfig.me)
+        user_info=$(python "/usr/local/shadowsocksr/mujson_mgr.py" -l)
+		    user_total=$(echo "${user_info}" | wc -l)
+	clear
+  echo
+	echo -e " Скрипт установки и модерации сервера ShadowsocksR ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
+	---- VPN USER CONTROL ----"
+ Приветствую, администратор сервера!  Дата: $(date +"%d-%-%Y")
+ echo -e " 
 IP сервера : $serverip123
+Домен сервера : $doainofserver
 Всего на сервере : $user_total
 
-  ${Green_font_prefix}1.${Font_color_suffix} Установить ShadowsocksR
-  ${Green_font_prefix}2.${Font_color_suffix} Обновить ShadowsocksR
-  ${Green_font_prefix}3.${Font_color_suffix} Удалить ShadowsocksR
-  ${Green_font_prefix}4.${Font_color_suffix} Установить libsodium
-  ${Green_font_prefix}5.${Font_color_suffix} Посмотреть информацию о пользователях
-  ${Green_font_prefix}6.${Font_color_suffix} Показать информацию о соединениях
-  ${Green_font_prefix}7.${Font_color_suffix} Настройки конфигурации юзеров
-  ${Green_font_prefix}8.${Font_color_suffix} Вручную изменить конфигурацию
-  ${Green_font_prefix}9.${Font_color_suffix} Очистка информации о трафике пользователей
-————————————
- ${Green_font_prefix}10.${Font_color_suffix} Запустить ShadowsocksR
- ${Green_font_prefix}11.${Font_color_suffix} Остановить ShadowsocksR
- ${Green_font_prefix}12.${Font_color_suffix} Перезапустить ShadowsocksR
- ${Green_font_prefix}13.${Font_color_suffix} Просмотреть лог ShadowsocksR
-————————————
- ${Green_font_prefix}14.${Font_color_suffix} Другие функции
- ${Green_font_prefix}15.${Font_color_suffix} Загрузить Базу Данных пользователей в облако
- ${Green_font_prefix}16.${Font_color_suffix} Загрузить Базу Данных пользователей из облака
- ${Green_font_prefix}17.${Font_color_suffix} Просмотреть IP адрес сервера
+———————————— Управление ключами ————————————
+ ${Green_font_prefix}1.${Font_color_suffix} Создать ключ
+ ${Green_font_prefix}2.${Font_color_suffix} Удалить ключ
+ ${Green_font_prefix}3.${Font_color_suffix} Изменить пароль ключа
+ ${Green_font_prefix}4.${Font_color_suffix} Информация о пользователях
+ ${Green_font_prefix}5.${Font_color_suffix} Показать подключённые IP адреса
+———————————— Управление базой ————————————
+ ${Green_font_prefix}6.${Font_color_suffix} Выгрузить базу
+ ${Green_font_prefix}7.${Font_color_suffix} Загрузить базу
+ ${Green_font_prefix}8.${Font_color_suffix} Редактировать базу в ручную
+ ${Green_font_prefix}9.${Font_color_suffix} Изменить адрес сервера
+———————————— Управление скриптом ————————————
+ ${Green_font_prefix}10.${Font_color_suffix} Включить Shadowsocks
+ ${Green_font_prefix}11.${Font_color_suffix} Выключить Shadowsocks
+ ${Green_font_prefix}12.${Font_color_suffix} Перезапустить Shadowsocks
+ ${Green_font_prefix}13.${Font_color_suffix} Очистка трафика пользователей
+ ${Green_font_prefix}14.${Font_color_suffix} Просмотреть лог Shadowsocks
+ ${Green_font_prefix}15.${Font_color_suffix} Другие функции
+———————————— Установка скрипта ————————————
+${Green_font_prefix}16.${Font_color_suffix} Установить Shadowsocks
+${Green_font_prefix}17.${Font_color_suffix} Удалить Shadowsocks
+———————————————— Автоудаление —————————————
+${Green_font_prefix}18.${Font_color_suffix} Настроить автоудаление SS
+${Green_font_prefix}19.${Font_color_suffix} Перенос базы автоудаления
+———————————————————————————————————————————
+${Green_font_prefix}20.${Font_color_suffix} Выход
  "
-	menu_status
-	echo && read -e -p "Введите корректный номер [1-17]：" num
-case "$num" in
-	1)
-	Install_SSR
-	;;
-	2)
-	Update_SSR
-	;;
-	3)
-	Uninstall_SSR
-	;;
-	4)
-	Install_Libsodium
-	;;
-	5)
-	View_User
-	;;
-	6)
-	View_user_connection_info
-	;;
-	7)
-	Modify_Config
-	;;
-	8)
-	Manually_Modify_Config
-	;;
-	9)
-	Clear_transfer
-	;;
-	10)
-	Start_SSR
-	;;
-	11)
-	Stop_SSR
-	;;
-	12)
-	Restart_SSR
-	;;
-	13)
-	View_Log
-	;;
-	14)
-	Other_functions
-	;;
-	15)
-	Upload_DB
-	;;
-	16)
-	Download_DB
-	;;
-	17)
-	Server_IP_Checker
-        ;;
-	*)
-	echo -e "${Error} Введите корректный номер [1-17]"
-	;;
-esac
-fi
+		menu_status
+		echo && read -e -p "Введите корректный номер [1-20]：" num
+	case "$num" in
+		1)
+		Add_port_user
+		;;
+		2)
+		Del_port_user
+		;;
+		3)
+		Modify_port
+		;;
+		4)
+		View_User
+		;;
+		5)
+		View_user_connection_info
+		;;
+		6)
+		Upload_DB
+		;;
+		7)
+		Download_DB
+		;;
+		8)
+		Manually_Modify_Config
+		;;
+		9)
+		Set_user_api_server_pub_addr "Modify" Modify_user_api_server_pub_addr
+		;;
+		10)
+		Start_SSR
+		;;
+		11)
+		Stop_SSR
+		;;
+		12)
+		Restart_SSR
+		;;
+		13)
+		Clear_transfer
+		;;
+		14)
+		View_Log
+		;;
+		15)
+		Other_functions
+		;;
+		16)
+		Install_SSR
+		;;
+		17)
+		Uninstall_SSR
+		;;
+		18)
+		ssautodel
+		;;
+		19)
+		ssautodeltransfer
+		;;
+		20)
+		Fastexit
+		;;
+		*)
+		echo -e "${Error} Введите корректный номер [1-20]"
+		;;
+	esac
+	fi
