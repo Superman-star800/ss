@@ -2033,8 +2033,7 @@ ${Green_font_prefix}17.${Font_color_suffix} Удалить Shadowsocks
 ${Green_font_prefix}18.${Font_color_suffix} Настроить автоудаление SS
 ${Green_font_prefix}19.${Font_color_suffix} Перенос базы автоудаления
 ———————————————————————————————————————————
-${Green_font_prefix}20.${Font_color_suffix} Выход
- "
+${Green_font_prefix}20.${Font_color_suffix} Выход"
 		menu_status
 		echo && read -e -p "Введите корректный номер [1-20]：" num
 	case "$num" in
