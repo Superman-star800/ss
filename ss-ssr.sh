@@ -1549,8 +1549,8 @@ Add_port_user(){
 				Add_iptables
 				Save_iptables
 				echo -e "${Info} Пользователь добавлен успешно ${Green_font_prefix}[Пользователь: ${ssr_user} , Порт: ${ssr_port}]${Font_color_suffix} "
+View_User_Info
 				echo
-					View_User_info
 					read -e -p "Хотите настроить автоудаление пользователя?[Y/n]:" autoyn
 					[[ -z ${autoyn} ]] && autoyn="y"
 					if [[ ${autoyn} == [Yy] ]]; then
