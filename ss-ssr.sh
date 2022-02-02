@@ -1586,9 +1586,6 @@ ENDMARKER
 						echo -e "Выход..." && exit
 					fi
 					break
-				else
-					echo -e "${Info} Продолжение изменения конфигурации пользователя..."
-				fi
 			fi
 		done
 	fi
