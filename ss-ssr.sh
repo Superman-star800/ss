@@ -385,63 +385,22 @@ Set_config_user(){
 	echo && echo ${Separator_1} && echo -e "	Имя пользователя : ${Green_font_prefix}${ssr_user}${Font_color_suffix}" && echo ${Separator_1} && echo
 }
 Set_config_port(){
-	echo "Порт
-	1. Авто
-	2. Вручную"	
-	read -e -p "По умолчанию: (1.Авто)" how_to_port
-	[[ -z "${how_to_port}" ]] && how_to_port="1"
-	if [[ ${how_to_port} == "1" ]]; then
-		echo -e "Порт автоматически сгенерирован."
-		ssr_port=$(shuf -i 100-999 -n 1)
-		while true
-		do
-		echo $((${ssr_port}+0)) &>/dev/null
-		if [[ $? == 0 ]]; then
+	echo -e "Порт автоматически сгенерирован."
+	ssr_port=$(shuf -i 100-999 -n 1)
+	while true
+	do
+	echo $((${ssr_port}+0)) &>/dev/null
+	if [[ $? == 0 ]]; then
 		if [[ ${ssr_port} -ge 1 ]] && [[ ${ssr_port} -le 65535 ]]; then
 			echo && echo ${Separator_1} && echo -e "	Порт: : ${Green_font_prefix}${ssr_port}${Font_color_suffix}" && echo ${Separator_1} && echo
 			break
 		else
-			echo -e "${Error} Введите корректный порт(1-999)"
+			echo -e "${Error} Введите корректный порт(1-65535)"
 		fi
 	else
-		echo -e "${Error} Введите корректный порт(1-999)"
+		echo -e "${Error} Введите корректный порт(1-65535)"
 	fi
 	done
-	elif [[ ${how_to_port} == "2" ]]; then
-		while true
-		do
-			read -e -p "Порт:" ssr_port
-			[[ -z "$ssr_port" ]] && break
-			echo $((${ssr_port}+0)) &>/dev/null
-			if [[ $? == 0 ]]; then
-				if [[ ${ssr_port} -ge 1 ]] && [[ ${ssr_port} -le 65535 ]]; then
-					echo && echo ${Separator_1} && echo -e "	Порт: : ${Green_font_prefix}${ssr_port}${Font_color_suffix}" && echo ${Separator_1} && echo
-					break
-				else
-					echo -e "${Error} Введите корректный порт(1-999)"
-				fi
-			else
-				echo -e "${Error} Введите корректный порт(1-999)"
-			fi
-		done
-	else 
-		echo -e "Порт автоматически сгенерирован."
-		ssr_port=$(shuf -i 100-999 -n 1)
-		while true
-		do
-		echo $((${ssr_port}+0)) &>/dev/null
-		if [[ $? == 0 ]]; then
-			if [[ ${ssr_port} -ge 1 ]] && [[ ${ssr_port} -le 65535 ]]; then
-			echo && echo ${Separator_1} && echo -e "	Порт: : ${Green_font_prefix}${ssr_port}${Font_color_suffix}" && echo ${Separator_1} && echo
-			break
-			else
-			echo -e "${Error} Введите корректный порт(1-999)"
-			fi
-		else
-		echo -e "${Error} Введите корректный порт(1-999)"
-		fi
-		done
-	fi
 }
 Set_config_password(){
 	echo "Пароль:
@@ -459,13 +418,82 @@ Set_config_password(){
 	echo && echo ${Separator_1} && echo -e "	Пароль : ${Green_font_prefix}${ssr_password}${Font_color_suffix}" && echo ${Separator_1} && echo
 }
 Set_config_method(){
-ssr_method="aes-128-ctr"
+		ssr_method="aes-128-ctr"
 }
 Set_config_protocol(){
 ssr_protocol="origin"
 }
+Set_config_protocol_slow(){
+	echo -e "Протокол
+	
+ ${Green_font_prefix}1.${Font_color_suffix} origin
+ ${Green_font_prefix}2.${Font_color_suffix} auth_sha1_v4
+ ${Green_font_prefix}3.${Font_color_suffix} auth_aes128_md5
+ ${Green_font_prefix}4.${Font_color_suffix} auth_aes128_sha1
+ ${Green_font_prefix}5.${Font_color_suffix} auth_chain_a
+ ${Green_font_prefix}6.${Font_color_suffix} auth_chain_b
+ ${Tip} Если вы хотите использовать метод шифорвания типа auth_chain_* лучше используйте none (Потому что у этого типа есть RC4 шифорвания)，что может вызвать проблемы" && echo
+	read -e -p "(По умолчанию: 3. auth_aes128_md5):" ssr_protocol
+	[[ -z "${ssr_protocol}" ]] && ssr_protocol="1"
+	if [[ ${ssr_protocol} == "1" ]]; then
+		ssr_protocol="origin"
+	elif [[ ${ssr_protocol} == "2" ]]; then
+		ssr_protocol="auth_sha1_v4"
+	elif [[ ${ssr_protocol} == "3" ]]; then
+		ssr_protocol="auth_aes128_md5"
+	elif [[ ${ssr_protocol} == "4" ]]; then
+		ssr_protocol="auth_aes128_sha1"
+	elif [[ ${ssr_protocol} == "5" ]]; then
+		ssr_protocol="auth_chain_a"
+	elif [[ ${ssr_protocol} == "6" ]]; then
+		ssr_protocol="auth_chain_b"
+	else
+		ssr_protocol="origin"
+	fi
+	echo && echo ${Separator_1} && echo -e "	Протокол : ${Green_font_prefix}${ssr_protocol}${Font_color_suffix}" && echo ${Separator_1} && echo
+	if [[ ${ssr_protocol} != "origin" ]]; then
+		if [[ ${ssr_protocol} == "auth_sha1_v4" ]]; then
+			read -e -p "Этот протокол совместим с оригинальной версией(_compatible)？[Y/n]" ssr_protocol_yn
+			[[ -z "${ssr_protocol_yn}" ]] && ssr_protocol_yn="y"
+			[[ $ssr_protocol_yn == [Yy] ]] && ssr_protocol=${ssr_protocol}"_compatible"
+			echo
+		fi
+	fi
+}
 Set_config_obfs(){
 ssr_obfs="plain"
+}
+Set_config_obfs_slow(){
+	echo -e "Выберите plug-in для obfs
+	
+ ${Green_font_prefix}1.${Font_color_suffix} plain
+ ${Green_font_prefix}2.${Font_color_suffix} http_simple
+ ${Green_font_prefix}3.${Font_color_suffix} http_post
+ ${Green_font_prefix}4.${Font_color_suffix} random_head
+ ${Green_font_prefix}5.${Font_color_suffix} tls1.2_ticket_auth
+ ${Tip} Неинтересная информация на китайском языке бла бла !" && echo
+	read -e -p "(По умолчанию: 1. plain):" ssr_obfs
+	[[ -z "${ssr_obfs}" ]] && ssr_obfs="1"
+	if [[ ${ssr_obfs} == "1" ]]; then
+		ssr_obfs="plain"
+	elif [[ ${ssr_obfs} == "2" ]]; then
+		ssr_obfs="http_simple"
+	elif [[ ${ssr_obfs} == "3" ]]; then
+		ssr_obfs="http_post"
+	elif [[ ${ssr_obfs} == "4" ]]; then
+		ssr_obfs="random_head"
+	elif [[ ${ssr_obfs} == "5" ]]; then
+		ssr_obfs="tls1.2_ticket_auth"
+	else
+		ssr_obfs="plain"
+	fi
+	echo && echo ${Separator_1} && echo -e "	Obfs : ${Green_font_prefix}${ssr_obfs}${Font_color_suffix}" && echo ${Separator_1} && echo
+	if [[ ${ssr_obfs} != "plain" ]]; then
+			read -e -p "Этот obfs совместим с оригинальной версией(_compatible)？[Y/n]" ssr_obfs_yn
+			[[ -z "${ssr_obfs_yn}" ]] && ssr_obfs_yn="y"
+			[[ $ssr_obfs_yn == [Yy] ]] && ssr_obfs=${ssr_obfs}"_compatible"
+			echo
+	fi
 }
 Set_config_protocol_param(){
 	while true
@@ -481,6 +509,26 @@ Set_config_protocol_param(){
 		fi
 	else
 		echo -e "${Error} Введите корректный номер(1-9999)"
+	fi
+	done
+}
+Set_config_protocol_param_slow(){
+	while true
+	do
+	echo -e "Введите количество юзеров, которые смогут одновременно подключиться"
+	echo -e "${Tip} Лучше использовать более 2 устройств"
+	read -e -p "(По умолчанию: неограниченно):" ssr_protocol_param
+	[[ -z "$ssr_protocol_param" ]] && ssr_protocol_param="" && echo && break
+	echo $((${ssr_protocol_param}+0)) &>/dev/null
+	if [[ $? == 0 ]]; then
+		if [[ ${ssr_protocol_param} -ge 1 ]] && [[ ${ssr_protocol_param} -le 9999 ]]; then
+			echo && echo ${Separator_1} && echo -e "	Лимит устройств : ${Green_font_prefix}${ssr_protocol_param}${Font_color_suffix}" && echo ${Separator_1} && echo
+			break
+		else
+			echo -e "${Error} Введите корректный номер(1-999)"
+		fi
+	else
+		echo -e "${Error} Введите корректный номер(1-999)"
 	fi
 	done
 }
@@ -501,6 +549,26 @@ Set_config_speed_limit_per_con(){
 	fi
 	done
 }
+Set_config_speed_limit_per_con_slow(){
+	while true
+	do
+	echo -e "Максимальная скорость загрузки для одного ключа(Единица：KB/S)"
+	echo -e "${Tip} Внимание: данная настройка может наложится на все ключи"
+	read -e -p "(По умолчанию: неограниченно):" ssr_speed_limit_per_con
+	[[ -z "$ssr_speed_limit_per_con" ]] && ssr_speed_limit_per_con=0 && echo && break
+	echo $((${ssr_speed_limit_per_con}+0)) &>/dev/null
+	if [[ $? == 0 ]]; then
+		if [[ ${ssr_speed_limit_per_con} -ge 1 ]] && [[ ${ssr_speed_limit_per_con} -le 131072 ]]; then
+			echo && echo ${Separator_1} && echo -e "	Лимит скорости на ключ : ${Green_font_prefix}${ssr_speed_limit_per_con} KB/S${Font_color_suffix}" && echo ${Separator_1} && echo
+			break
+		else
+			echo -e "${Error} Введите корректный номер(1-131072)"
+		fi
+	else
+		echo -e "${Error} Введите корректный номер(1-131072)"
+	fi
+	done	
+}
 Set_config_speed_limit_per_user(){
 	while true
 	do
@@ -517,7 +585,28 @@ Set_config_speed_limit_per_user(){
 	else
 		echo -e "${Error} Введите корректный номер(1-131072)"
 	fi
-  done
+	done
+}
+Set_config_speed_limit_per_user_slow(){
+	while true
+	do
+	echo
+	echo -e "Лимит скорости для каждого юзера ключа(Единица：KB/S)"
+	echo -e "${Tip} Нифига не понял что здесь было。"
+	read -e -p "(По умолчанию: неограниченно):" ssr_speed_limit_per_user
+	[[ -z "$ssr_speed_limit_per_user" ]] && ssr_speed_limit_per_user=0 && echo && break
+	echo $((${ssr_speed_limit_per_user}+0)) &>/dev/null
+	if [[ $? == 0 ]]; then
+		if [[ ${ssr_speed_limit_per_user} -ge 1 ]] && [[ ${ssr_speed_limit_per_user} -le 131072 ]]; then
+			echo && echo ${Separator_1} && echo -e "	Лимит скорости на пользователя : ${Green_font_prefix}${ssr_speed_limit_per_user} KB/S${Font_color_suffix}" && echo ${Separator_1} && echo
+			break
+		else
+			echo -e "${Error} Введите корректный номер(1-131072)"
+		fi
+	else
+		echo -e "${Error} Введите корректный номер(1-131072)"
+	fi
+	done	
 }
 Set_config_transfer(){
 	while true
@@ -537,9 +626,40 @@ Set_config_transfer(){
 	fi
 	done
 }
+Set_config_transfer_slow(){
+	while true
+	do
+	echo
+	echo -e "Введите максимальный трафик для ключа(Единица: GB, 1-838868 GB)"
+	read -e -p "(По умолчанию: неограниченно):" ssr_transfer
+	[[ -z "$ssr_transfer" ]] && ssr_transfer="838868" && echo && break
+	echo $((${ssr_transfer}+0)) &>/dev/null
+	if [[ $? == 0 ]]; then
+		if [[ ${ssr_transfer} -ge 1 ]] && [[ ${ssr_transfer} -le 838868 ]]; then
+			echo && echo ${Separator_1} && echo -e "	Всего трафика : ${Green_font_prefix}${ssr_transfer} GB${Font_color_suffix}" && echo ${Separator_1} && echo
+			break
+		else
+			echo -e "${Error} Введите корректный номер(1-838868)"
+		fi
+	else
+		echo -e "${Error} Введите корректный номер(1-838868)"
+	fi
+	done
+}
 Set_config_forbid(){
 	ssr_forbid=""
 	[[ -z "${ssr_forbid}" ]] && ssr_forbid=""
+}
+Set_config_forbid_slow(){
+	echo "Введите порт, который следует запретить"
+	echo -e "${Tip} Пример: Запретив 25ый порт, вы запретите доступ к сервисам почты
+Единичный порт: 25
+Несколько портов: 23,465
+Диапазон портов: 233-266
+Смешанный формат: 25,465,233-666 "
+	read -e -p "(По умолчанию: все порты открыты):" ssr_forbid
+	[[ -z "${ssr_forbid}" ]] && ssr_forbid=""
+	echo && echo ${Separator_1} && echo -e "	Запрещенные порты : ${Green_font_prefix}${ssr_forbid}${Font_color_suffix}" && echo ${Separator_1} && echo
 }
 Set_config_enable(){
 	user_total=$(echo $((${user_total}-1)))
@@ -583,6 +703,7 @@ Set_config_enable(){
 	fi
 }
 Set_user_api_server_pub_addr(){
+  Modify_user_api_server_pub_addr
 	addr=$1
 	if [[ "${addr}" == "Modify" ]]; then
 		server_pub_addr=$(cat ${config_user_api_file}|grep "SERVER_PUB_ADDR = "|awk -F "[']" '{print $2}')
@@ -611,6 +732,47 @@ Set_user_api_server_pub_addr(){
 		fi
 	fi
 	echo && echo ${Separator_1} && echo -e "	IP сервера : ${Green_font_prefix}${ssr_server_pub_addr}${Font_color_suffix}" && echo ${Separator_1} && echo
+}
+
+whattodo(){
+	echo -e "Как установить нового пользователя?
+	${Green_font_prefix}1.${Font_color_suffix}Быстро (без ограничений)
+	${Red_font_prefix}2.${Font_color_suffix}Самому настроить ограничения"
+	read -e -p "(По умолчанию: Быстро ):" howtosetup
+	[[ -z "${howtosetup}" ]] && howtosetup="1"
+	if [[ ${howtosetup} == "1" ]]; then
+		Set_config_all
+	elif [[ ${howtosetup} == "2" ]]; then
+		Set_config_all_slow
+	else
+		Set_config_all
+	fi
+}
+Set_config_all_slow(){
+	lal=$1
+	if [[ "${lal}" == "Modify" ]]; then
+		Set_config_password
+		Set_config_method
+		Set_config_protocol_slow
+		Set_config_obfs_slow
+		Set_config_protocol_param_slow
+		Set_config_speed_limit_per_con_slow
+		Set_config_speed_limit_per_user_slow
+		Set_config_transfer_slow
+		Set_config_forbid_slow
+	else
+		Set_config_user
+		Set_config_port
+		Set_config_password
+		Set_config_method
+		Set_config_protocol_slow
+		Set_config_obfs_slow
+		Set_config_protocol_param_slow
+		Set_config_speed_limit_per_con_slow
+		Set_config_speed_limit_per_user_slow
+		Set_config_transfer_slow
+		Set_config_forbid_slow
+	fi
 }
 Set_config_all(){
 	lal=$1
@@ -841,26 +1003,26 @@ Installation_dependency(){
 Install_SSR(){
 	check_root
 	[[ -e ${ssr_folder} ]] && echo -e "${Error} ShadowsocksR уже установлен !" && exit 1
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Set_user_api_server_pub_addr
 	Set_config_all
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Installation_dependency
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Download_SSR
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Service_SSR
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	JQ_install
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Add_port_user "install"
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Set_iptables
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Add_iptables
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Save_iptables
-	echo -e "${Info} Подождите пожалуйста..."
+	echo -e "${Info} типа че то происходит..."
 	Start_SSR
 	Install_Libsodium
 	Get_User_info "${ssr_port}"
@@ -1387,8 +1549,8 @@ Add_port_user(){
 				Add_iptables
 				Save_iptables
 				echo -e "${Info} Пользователь добавлен успешно ${Green_font_prefix}[Пользователь: ${ssr_user} , Порт: ${ssr_port}]${Font_color_suffix} "
+				echo
 					View_User_info
-					echo
 					read -e -p "Хотите настроить автоудаление пользователя?[Y/n]:" autoyn
 					[[ -z ${autoyn} ]] && autoyn="y"
 					if [[ ${autoyn} == [Yy] ]]; then
@@ -1417,6 +1579,7 @@ ENDMARKER
 						fi
 						echo -e "А именно в $future"						
 						break
+					else
 						echo -e "Выход..." && exit
 					fi
 					break
@@ -2001,43 +2164,43 @@ serverip123=$(curl ifconfig.me)
 	clear
   echo
 	echo -e " Скрипт установки и модерации сервера ShadowsocksR ${Red_font_prefix}[v${sh_ver}]${Font_color_suffix}
-	---- VPN USER CONTROL ----"
- Приветствую, администратор сервера!  Дата: $(date +"%d-%-%Y")
- echo -e " 
-IP сервера : $serverip123
+		---- VPN USER CONTROL ----"
+
+ Приветствую, администратор сервера!  Дата: $(date +"%d-%m-%Y")
+  echo -e "
+ 		IP сервера : $serverip123
 Домен сервера : $doainofserver
 Всего на сервере : $user_total
-
-———————————— Управление ключами ————————————
- ${Green_font_prefix}1.${Font_color_suffix} Создать ключ
+ ———————————— Управление ключами ————————————
+  ${Green_font_prefix}1.${Font_color_suffix} Создать ключ
  ${Green_font_prefix}2.${Font_color_suffix} Удалить ключ
- ${Green_font_prefix}3.${Font_color_suffix} Изменить пароль ключа
- ${Green_font_prefix}4.${Font_color_suffix} Информация о пользователях
- ${Green_font_prefix}5.${Font_color_suffix} Показать подключённые IP адреса
+  ${Green_font_prefix}3.${Font_color_suffix} Изменить пароль ключа
+  ${Green_font_prefix}4.${Font_color_suffix} Информация о пользователях
+  ${Green_font_prefix}5.${Font_color_suffix} Показать подключённые IP адреса
 ———————————— Управление базой ————————————
- ${Green_font_prefix}6.${Font_color_suffix} Выгрузить базу
- ${Green_font_prefix}7.${Font_color_suffix} Загрузить базу
- ${Green_font_prefix}8.${Font_color_suffix} Редактировать базу в ручную
- ${Green_font_prefix}9.${Font_color_suffix} Изменить адрес сервера
+  ${Green_font_prefix}6.${Font_color_suffix} Выгрузить базу
+  ${Green_font_prefix}7.${Font_color_suffix} Загрузить базу
+  ${Green_font_prefix}8.${Font_color_suffix} Редактировать базу в ручную
+  ${Green_font_prefix}9.${Font_color_suffix} Изменить адрес сервера
 ———————————— Управление скриптом ————————————
- ${Green_font_prefix}10.${Font_color_suffix} Включить Shadowsocks
+  ${Green_font_prefix}10.${Font_color_suffix} Включить Shadowsocks
  ${Green_font_prefix}11.${Font_color_suffix} Выключить Shadowsocks
  ${Green_font_prefix}12.${Font_color_suffix} Перезапустить Shadowsocks
  ${Green_font_prefix}13.${Font_color_suffix} Очистка трафика пользователей
- ${Green_font_prefix}14.${Font_color_suffix} Просмотреть лог Shadowsocks
+ ${Green_font_prefix}14.${Font_color_suffix} Просмотреть лог ShadowsocksR
  ${Green_font_prefix}15.${Font_color_suffix} Другие функции
 ———————————— Установка скрипта ————————————
-${Green_font_prefix}16.${Font_color_suffix} Установить Shadowsocks
-${Green_font_prefix}17.${Font_color_suffix} Удалить Shadowsocks
-———————————————— Автоудаление —————————————
-${Green_font_prefix}18.${Font_color_suffix} Настроить автоудаление SS
-${Green_font_prefix}19.${Font_color_suffix} Перенос базы автоудаления
+ ${Green_font_prefix}16.${Font_color_suffix} Загрузить Базу Данных пользователей в облако
+ ${Green_font_prefix}17.${Font_color_suffix} Загрузить Базу Данных пользователей из облака 
+ ———————————————— Автоудаление —————————————
+ ${Green_font_prefix}18.${Font_color_suffix} Настроить автоудаление SS
+ ${Green_font_prefix}19.${Font_color_suffix} Перенос базы автоудаления
 ———————————————————————————————————————————
-${Green_font_prefix}20.${Font_color_suffix} Выход"
+ ${Green_font_prefix}20.${Font_color_suffix} Выход 	 " 
 		menu_status
 		echo && read -e -p "Введите корректный номер [1-20]：" num
 	case "$num" in
-		1)
+1)
 		Add_port_user
 		;;
 		2)
@@ -2062,7 +2225,7 @@ ${Green_font_prefix}20.${Font_color_suffix} Выход"
 		Manually_Modify_Config
 		;;
 		9)
-		Set_user_api_server_pub_addr "Modify" Modify_user_api_server_pub_addr
+		Set_user_api_server_pub_addr
 		;;
 		10)
 		Start_SSR
